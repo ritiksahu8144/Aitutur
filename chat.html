@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chat – AI Tutor</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1c2033;--mute:#6b7190;--brand:#4f46e5;--brand-ink:#fff;--bot:#fff;--user:#4f46e5;--line:#e3e6f0;--chip:#eef0ff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12141f;--card:#1b1e2e;--ink:#eceefb;--mute:#9aa0c3;--brand:#818cf8;--brand-ink:#12141f;--bot:#1b1e2e;--user:#4f46e5;--line:#2c3048;--chip:#262a45}}
+:root[data-theme="dark"]{--bg:#12141f;--card:#1b1e2e;--ink:#eceefb;--mute:#9aa0c3;--brand:#818cf8;--brand-ink:#12141f;--bot:#1b1e2e;--user:#4f46e5;--line:#2c3048;--chip:#262a45}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column}
+header{padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.chip{flex:none;border:1px solid var(--line);background:var(--chip);color:var(--ink);padding:6px 12px;border-radius:999px;font-size:14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+#msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:88%;padding:10px 14px;border-radius:16px;word-wrap:break-word;overflow-wrap:anywhere}
+.m.u{align-self:flex-end;background:var(--user);color:#fff;border-bottom-right-radius:4px;white-space:pre-wrap}
+.m.b{align-self:flex-start;background:var(--bot);border:1px solid var(--line);border-bottom-left-radius:4px}
+.m.b p{margin:0 0 8px}.m.b p:last-child{margin:0}
+.m.b ul,.m.b ol{margin:4px 0 8px;padding-left:22px}
+.m.b code{background:var(--chip);padding:1px 5px;border-radius:5px;font-size:.92em}
+.start{margin:auto;text-align:center;color:var(--mute);max-width:420px}
+.start .big{font-size:42px}
+.sugs{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.sug{background:var(--card);border:1px solid var(--line);color:var(--ink);padding:10px 12px;border-radius:12px;text-align:left;font-size:15px;cursor:pointer}
+form{display:flex;gap:8px;padding:10px 12px;background:var(--card);border-top:1px solid var(--line)}
+textarea{flex:1;resize:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:14px;padding:10px 12px;font:inherit;max-height:120px}
+button.send{border:0;background:var(--brand);color:var(--brand-ink);border-radius:14px;padding:0 18px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:default}
+.err{color:#d33;font-size:14px}
+.row{margin-bottom:8px}
+.clip{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:14px;padding:0 12px;font-size:20px;cursor:pointer}
+#atts{display:none;gap:8px;padding:8px 12px 0;background:var(--card);border-top:1px solid var(--line);overflow-x:auto}
+.att{position:relative;flex:none;background:var(--chip);border-radius:10px;padding:6px 26px 6px 8px;font-size:13px;display:flex;align-items:center;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.att img{height:48px;border-radius:6px}
+.att button{position:absolute;top:0;right:2px;border:0;background:none;color:var(--ink);font-size:18px;cursor:pointer}
+.th{max-width:100%;max-height:200px;border-radius:10px;display:block;margin-bottom:6px}
+select{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:8px 10px;font:inherit;font-size:15px}
+nav{flex:none}
+nav{display:flex;gap:4px;overflow-x:auto;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line)}
+nav a{flex:none;padding:6px 12px;border-radius:999px;color:var(--ink);text-decoration:none;font-size:15px}
+nav a[aria-current="page"]{background:var(--brand);color:var(--brand-ink)}
+nav a:focus-visible,.btn:focus-visible,.card:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+</style>
+</head>
+<body>
+<nav><a href="index.html">Home</a><a href="chat.html" aria-current="page">Chat</a><a href="subjects.html">Subjects</a><a href="languages.html">Languages</a><a href="tips.html">Tips</a><a href="about.html">About</a></nav>
+<header>
+  <h1>🎓 AI Tutor <small style="font-weight:400;color:var(--mute)">Your Study Buddy</small></h1>
+  <div class="row"><select id="lang" aria-label="Reply language"></select></div>
+  <div class="chips" id="chips"></div>
+</header>
+<div id="msgs"></div>
+<div id="atts"></div>
+<form id="f">
+  <button type="button" class="clip" id="clip" aria-label="Attach photo or file">📎</button>
+  <input type="file" id="fi" multiple accept="image/*,.pdf,.txt,.md,.csv,.json,.py,.js,.html,.css,.java,.c,.cpp" hidden>
+  <textarea id="t" rows="1" placeholder="Type your question here…" aria-label="Your question"></textarea>
+  <button class="send" id="go" type="submit">Send</button>
+</form>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const SYS = `You are an elite, empathetic AI Personal Tutor and Homework Helper for school and college students.
+RULES:
+1. Never give only the final answer for Maths, Physics, Chemistry or logic problems. Teach in clear numbered steps and explain WHY each step is done.
+2. Reply in the language specified under "Reply language" below, in a casual, supportive tone. Keep it simple; define jargon before using it.
+3. Format for a mobile screen: bold key terms, short bullets, math in plain readable notation (like v = u + at, x^2, sqrt(x)). No tables, no headings with #.
+4. Problem framework: (a) Concept Overview in 1-2 simple sentences, (b) Step-by-step execution, (c) Final Answer clearly highlighted, (d) Pro-Tip or shortcut if useful.
+5. End EVERY solution with one short, encouraging follow-up question or mini-challenge on the same topic.
+Students may attach photos (textbook pages, handwritten problems, diagrams) or files. Read them carefully and help with what is in them.
+GUARDRAILS:
+- If asked to write a full essay or creative assignment, do not write it. Give a detailed outline, a strong opening paragraph, and bullet points of what to include in each part, so the student writes it themselves.
+- If the question is ambiguous, blurred or incomplete (missing values, units, options), politely ask for the missing context.
+- For inappropriate, unsafe or non-educational requests, gently decline and steer back to studies.`;
+
+const SUBJECTS=["All Subjects","Maths","Physics","Chemistry","Biology","English","Coding","History"];
+const SUGS=["Explain Newton’s three laws in simple words","Solve: 2x + 5 = 17","What is photosynthesis?","Write an essay on climate change for me"];
+const LANGS=[["auto","Auto-detect (reply in my language)"],["English","English"],["Hinglish","Hinglish (Hindi in English letters)"],["Hindi","Hindi – हिन्दी"],["Bengali","Bengali – বাংলা"],["Telugu","Telugu – తెలుగు"],["Marathi","Marathi – मराठी"],["Tamil","Tamil – தமிழ்"],["Urdu","Urdu – اردو"],["Gujarati","Gujarati – ગુજરાતી"],["Kannada","Kannada – ಕನ್ನಡ"],["Odia","Odia – ଓଡ଼ିଆ"],["Malayalam","Malayalam – മലയാളം"],["Punjabi","Punjabi – ਪੰਜਾਬੀ"],["Assamese","Assamese – অসমীয়া"],["Maithili","Maithili – मैथिली"],["Sanskrit","Sanskrit – संस्कृतम्"],["Nepali","Nepali – नेपाली"],["Konkani","Konkani – कोंकणी"],["Sindhi","Sindhi – سنڌي"],["Kashmiri","Kashmiri – کٲشُر"],["Dogri","Dogri – डोगरी"],["Manipuri (Meitei)","Manipuri (Meitei) – ꯃꯤꯇꯩꯂꯣꯟ"],["Santali","Santali – ᱥᱟᱱᱛᱟᱲᱤ"],["Bodo","Bodo – बर’"]];
+let lang="auto", atts=[];
+let subject=SUBJECTS[0], hist=[], busy=false, sample=null;
+const $=id=>document.getElementById(id), msgs=$("msgs"), ta=$("t"), go=$("go");
+
+SUBJECTS.forEach(s=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=s;b.setAttribute("aria-pressed",s===subject);
+ b.onclick=()=>{subject=s;[...$("chips").children].forEach(c=>c.setAttribute("aria-pressed",c.textContent===s))};$("chips").appendChild(b)});
+
+LANGS.forEach(([v,l])=>{const o=document.createElement("option");o.value=v;o.textContent=l;$("lang").appendChild(o)});
+$("lang").onchange=e=>{lang=e.target.value};
+function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function inline(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/`([^`]+)`/g,"<code>$1</code>")}
+function md(src){
+ const out=[];let list=null;
+ const close=()=>{if(list){out.push("</"+list+">");list=null}};
+ src.split("\n").forEach(l=>{
+  let m;
+  if(m=l.match(/^\s*[-*•]\s+(.*)/)){if(list!=="ul"){close();out.push("<ul>");list="ul"}out.push("<li>"+inline(m[1])+"</li>")}
+  else if(m=l.match(/^\s*\d+[.)]\s+(.*)/)){if(list!=="ol"){close();out.push("<ol>");list="ol"}out.push("<li>"+inline(m[1])+"</li>")}
+  else if(l.trim()===""){close()}
+  else{close();out.push("<p>"+inline(l.replace(/^#+\s*/,""))+"</p>")}
+ });close();return out.join("");
+}
+function add(role,text){const d=document.createElement("div");d.className="m "+(role==="user"?"u":"b");
+ if(role==="user")d.textContent=text;else d.innerHTML=md(text);msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d}
+
+function welcome(){
+ msgs.innerHTML="";const w=document.createElement("div");w.className="start";
+ w.innerHTML='<div class="big">📚</div><p><b>Hello! I’m your AI Tutor.</b><br>Ask me any question. I’ll explain it step by step instead of just giving the answer.<br>Pick your language from the list above, and tap 📎 to attach a photo or file.</p>';
+ const s=document.createElement("div");s.className="sugs";
+ SUGS.forEach(q=>{const b=document.createElement("button");b.type="button";b.className="sug";b.textContent=q;b.onclick=()=>send(q);s.appendChild(b)});
+ w.appendChild(s);msgs.appendChild(w);
+}
+welcome();
+
+function note(t){const e=add("bot","");e.innerHTML='<span class="err">'+esc(t)+'</span>'}
+function renderAtts(){const box=$("atts");box.innerHTML="";atts.forEach((a,i)=>{const c=document.createElement("div");c.className="att";if(a.url){const im=document.createElement("img");im.src=a.url;im.alt="";c.appendChild(im)}else c.appendChild(document.createTextNode("📄 "+a.name));const x=document.createElement("button");x.type="button";x.textContent="×";x.setAttribute("aria-label","Remove");x.onclick=()=>{atts.splice(i,1);renderAtts()};c.appendChild(x);box.appendChild(c)});box.style.display=atts.length?"flex":"none"}
+function shrink(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const s=Math.min(1,1600/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);c.toBlob(b=>{URL.revokeObjectURL(u);b?res(b):rej()},"image/jpeg",.85)};im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
+async function pdfText(file){if(!window.pdfjsLib)throw 0;pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";const d=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let t="";for(let p=1;p<=Math.min(d.numPages,30);p++){const pg=await d.getPage(p),c=await pg.getTextContent();t+=c.items.map(i=>i.str).join(" ")+"\n"}return t}
+async function addFiles(list){
+ for(const f of list){
+  if(atts.length>=4){note("You can attach up to 4 items at a time.");break}
+  try{
+   if(f.type.startsWith("image/")){const b=await shrink(f);atts.push({name:f.name,blob:b,url:URL.createObjectURL(b)})}
+   else if(/\.pdf$/i.test(f.name)||f.type==="application/pdf"){const t=(await pdfText(f)).trim();if(!t)throw "scan";atts.push({name:f.name,text:t.slice(0,20000)})}
+   else if(f.size<=2e6&&(f.type.startsWith("text/")||/\.(txt|md|csv|json|py|js|html|css|java|c|cpp)$/i.test(f.name))){atts.push({name:f.name,text:(await f.text()).slice(0,20000)})}
+   else note("I can’t read "+f.name+". Please attach a photo, PDF or text file.");
+  }catch(e){note(e==="scan"?f.name+" has no readable text. Please attach a photo of the page instead.":"I couldn’t read "+f.name+". Please try a photo of it instead.")}
+ }
+ renderAtts();
+}
+function addUser(text,cur){const d=document.createElement("div");d.className="m u";cur.forEach(a=>{if(a.url){const im=document.createElement("img");im.src=a.url;im.alt="Attached photo";im.className="th";d.appendChild(im)}else{const s=document.createElement("div");s.textContent="📄 "+a.name;d.appendChild(s)}});if(text){const s=document.createElement("div");s.textContent=text;d.appendChild(s)}msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight}
+$("clip").onclick=()=>$("fi").click();
+$("fi").onchange=e=>{const l=[...e.target.files];e.target.value="";addFiles(l)};
+async function send(text){
+ text=(text||"").trim();if((!text&&!atts.length)||busy)return;
+ if(!text)text="Please help me with the attached file.";
+ if(!hist.length)msgs.innerHTML="";
+ if(!sample){sample=await (typeof claude!=="undefined"?claude.use("sample"):Promise.resolve(null)).catch(()=>null)}
+ const cur=atts.splice(0);renderAtts();addUser(text,cur);ta.value="";ta.style.height="auto";
+ if(!sample){const e=add("bot","");e.innerHTML='<span class="err">AI is not available right now. Please open this page inside Claude.</span>';return}
+ const imgs=cur.filter(a=>a.blob).map(a=>a.blob);
+ if(imgs.length){let ok=false;try{ok=(await sample.limits()).images}catch(e){}if(!ok){note("Photos are not supported here. Please type the question or attach a text file or PDF.");return}}
+ const full=text+cur.filter(a=>a.text).map(a=>"\n\n[Attached file: "+a.name+"]\n"+a.text).join("")+(imgs.length?"\n[Student attached "+imgs.length+" photo(s) in this message]":"");
+ hist.push({role:"user",content:full});
+ busy=true;go.disabled=true;
+ const bubble=add("bot","Thinking…");
+ const convo=hist.slice(-12).map(h=>(h.role==="user"?"Student: ":"Tutor: ")+h.content).join("\n\n");
+ const prompt=SYS+"\n\nReply language: "+(lang==="auto"?"Reply in the same language and script the student writes in (Hinglish stays Hinglish).":"Reply ONLY in "+lang+(lang==="Hinglish"?" (Hindi written in Roman letters).":", written in its native script, keeping common technical terms in English where natural."))+"\n\nSelected subject: "+subject+"\n\nConversation so far:\n"+convo+"\n\nTutor:";
+ try{
+  const r=await sample(prompt,{cache:false,images:imgs.length?imgs:undefined,onText:({text})=>{bubble.innerHTML=md(text);msgs.scrollTop=msgs.scrollHeight}});
+  bubble.innerHTML=md(r.text);hist.push({role:"assistant",content:r.text});
+ }catch(e){
+  hist.pop();
+  bubble.innerHTML='<span class="err">'+(e&&e.code==="not_granted"?"Permission was not granted. Please try again and allow it.":e&&e.code==="rate_limited"?"Too many requests. Please wait a bit and try again.":"Something went wrong. Please try again.")+"</span>";
+ }
+ busy=false;go.disabled=false;msgs.scrollTop=msgs.scrollHeight;ta.focus();
+}
+const q=new URLSearchParams(location.search);
+if(SUBJECTS.includes(q.get("subject"))){subject=q.get("subject");[...$("chips").children].forEach(c=>c.setAttribute("aria-pressed",c.textContent===subject))}
+if(LANGS.some(l=>l[0]===q.get("lang"))){lang=q.get("lang");$("lang").value=lang}
+$("f").addEventListener("submit",e=>{e.preventDefault();send(ta.value)});
+ta.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send(ta.value)}});
+ta.addEventListener("input",()=>{ta.style.height="auto";ta.style.height=Math.min(ta.scrollHeight,120)+"px"});
+</script>
+</body>
+</html>
